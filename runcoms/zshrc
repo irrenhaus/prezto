@@ -10,4 +10,53 @@ if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
   source "${ZDOTDIR:-$HOME}/.zprezto/init.zsh"
 fi
 
-# Customize to your needs...
+DOTFILES=$HOME/.dotfiles
+
+# use .localrc for SUPER SECRET CRAP that you don't
+# want in your public, versioned repo.
+if [[ -a $HOME/.localrc ]]
+then
+    source $HOME/.localrc
+fi
+
+# Load dotfiles ZSH configs
+typeset -U config_files
+config_files=("${(@f)$(find $DOTFILES -maxdepth 2 -name "*.zsh")}")
+
+# load the path files
+for file in ${(M)config_files:#*/path.zsh}; do
+    if [ -z "$(echo $file | grep -o ".symlink")" ]; then
+        source $file
+    fi
+done
+
+# load everything but the path, alias and completion files
+for file in ${${config_files:#*/path.zsh}:#*/completion.zsh:#*/aliases.zsh}; do
+    if [ -z "$(echo $file | grep -o ".symlink")" ]; then
+        source $file
+    fi
+done
+
+# load every completion after autocomplete loads
+for file in ${(M)config_files:#*/completion.zsh}; do
+    if [ -z "$(echo $file | grep -o ".symlink")" ]; then
+        source $file
+    fi
+done
+
+# load all aliases
+for file in ${(M)config_files:#*/aliases.zsh}; do
+    if [ -z "$(echo $file | grep -o ".symlink")" ]; then
+        source $file
+    fi
+done
+
+type rm | grep "alias" >/dev/null 2>/dev/null && unalias rm
+
+unset config_files
+
+export NVM_DIR="/home/irrenhaus/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
+
+source /usr/share/chruby/chruby.sh
+source /usr/share/chruby/auto.sh
